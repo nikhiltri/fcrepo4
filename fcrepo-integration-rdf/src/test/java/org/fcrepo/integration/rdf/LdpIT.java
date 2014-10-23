@@ -65,7 +65,6 @@ public class LdpIT extends AbstractIntegrationRdfIT {
                 "omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"");
         final GraphStore graphStore = getGraphStore(httpGet);
 
-        logger.error(graphStore.toString());
         assertFalse(graphStore.isEmpty());
     }
 }

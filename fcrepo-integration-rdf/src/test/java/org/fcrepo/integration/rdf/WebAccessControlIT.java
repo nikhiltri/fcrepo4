@@ -15,14 +15,9 @@
  */
 package org.fcrepo.integration.rdf;
 
-import com.hp.hpl.jena.update.GraphStore;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.junit.Test;
 
 import java.io.IOException;
-
-import static org.junit.Assert.assertFalse;
 
 /**
  * @author cabeer
@@ -39,13 +34,6 @@ public class WebAccessControlIT extends AbstractIntegrationRdfIT {
                 "   acl:mode acl:Read, acl:Write; \n" +
                 "   acl:agent <" + card + "#me> .";
 
-        final HttpResponse response = createLDPRSAndCheckResponse(getRandomUniquePid(), s);
-        final String location = response.getFirstHeader("Location").getValue();
-
-        final HttpGet httpGet = new HttpGet(location);
-        httpGet.addHeader("Prefer", "return=minimal");
-        final GraphStore graphStore = getGraphStore(httpGet);
-
-        assertFalse(graphStore.isEmpty());
+        createLDPRSAndCheckResponse(getRandomUniquePid(), s);
     }
 }
