@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.fcrepo.http.commons.domain;
 
 import com.google.common.base.Optional;
@@ -25,6 +26,7 @@ import java.util.List;
 
 /**
  * JAX-RS HTTP parameter parser for the Prefer header
+ *
  * @author cabeer
  */
 public class Prefer {
@@ -37,12 +39,23 @@ public class Prefer {
      * @param inputValue
      * @throws ParseException
      */
-    public Prefer(final String inputValue) throws ParseException {
-        preferTags = HttpHeaderReader.readList(PREFER_CREATOR, inputValue);
+    public Prefer(final String header) throws ParseException {
+        preferTags = HttpHeaderReader.readList(PREFER_CREATOR, header);
+    }
+
+    public Prefer(final Prefer base) {
+        preferTags = base.preferTags;
+    }
+
+    public Prefer(final Prefer base, final Prefer additional) throws ParseException {
+        final List<PreferTag> basePreferTags = base.preferTags;
+        basePreferTags.addAll(additional.preferTags);
+        preferTags = basePreferTags;
     }
 
     /**
      * Does the Prefer: header have a return tag
+     *
      * @return true if the header has a return tag
      */
     public Boolean hasReturn() {
@@ -51,6 +64,7 @@ public class Prefer {
 
     /**
      * Does the Prefer: header have a return tag
+     *
      * @return true if the header has a return tag
      */
     public Boolean hasHandling() {
@@ -59,6 +73,7 @@ public class Prefer {
 
     /**
      * Get the return tag, or a blank default, if none exists.
+     *
      * @return return tag, or a blank default, if none exists
      */
     public PreferTag getReturn() {
@@ -72,6 +87,7 @@ public class Prefer {
 
     /**
      * Get the return tag, or a blank default, if none exists.
+     *
      * @return return tag, or a blank default, if none exists
      */
     public PreferTag getHandling() {
@@ -83,18 +99,18 @@ public class Prefer {
         return PreferTag.emptyTag();
     }
 
-
-
     private static final HttpHeaderReader.ListElementCreator<PreferTag> PREFER_CREATOR =
-        new HttpHeaderReader.ListElementCreator<PreferTag>() {
-            @Override
-            public PreferTag create(final HttpHeaderReader reader) throws ParseException {
-                return new PreferTag(reader);
-            }
-        };
+            new HttpHeaderReader.ListElementCreator<PreferTag>() {
+
+                @Override
+                public PreferTag create(final HttpHeaderReader reader) throws ParseException {
+                    return new PreferTag(reader);
+                }
+            };
 
     private static Predicate<PreferTag> getPreferTag(final String tagName) {
         return new Predicate<PreferTag>() {
+
             @Override
             public boolean apply(final PreferTag tag) {
                 return tag.getTag().equals(tagName);
