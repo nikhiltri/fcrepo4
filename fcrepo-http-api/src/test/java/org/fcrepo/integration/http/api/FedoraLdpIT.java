@@ -49,8 +49,10 @@ import static org.apache.jena.riot.WebContent.contentTypeSPARQLUpdate;
 import static org.apache.jena.riot.WebContent.contentTypeTurtle;
 import static org.fcrepo.jcr.FedoraJcrTypes.FCR_METADATA;
 import static org.fcrepo.jcr.FedoraJcrTypes.ROOT;
+import static org.fcrepo.kernel.RdfLexicon.BASIC_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.CONTAINS;
 import static org.fcrepo.kernel.RdfLexicon.DC_TITLE;
+import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.FIRST_PAGE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_CHILD;
 import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
@@ -59,6 +61,7 @@ import static org.fcrepo.kernel.RdfLexicon.HAS_OBJECT_SIZE;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_IDENTIFIER;
 import static org.fcrepo.kernel.RdfLexicon.HAS_PRIMARY_TYPE;
 import static org.fcrepo.kernel.RdfLexicon.INBOUND_REFERENCES;
+import static org.fcrepo.kernel.RdfLexicon.INDIRECT_CONTAINER;
 import static org.fcrepo.kernel.RdfLexicon.JCR_NT_NAMESPACE;
 import static org.fcrepo.kernel.RdfLexicon.LDP_MEMBER;
 import static org.fcrepo.kernel.RdfLexicon.LDP_NAMESPACE;
@@ -180,6 +183,57 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpHead headObjMethod = new HttpHead(location);
         assertEquals(200, getStatus(headObjMethod));
     }
+
+    @Test
+    public void testHeadBasicContainer() throws Exception {
+        final String pid = getRandomUniquePid();
+
+        createObject(pid);
+        addMixin(pid, BASIC_CONTAINER.getURI());
+
+        final String location = serverAddress + pid;
+        final HttpHead headObjMethod = new HttpHead(location);
+        final HttpResponse response = client.execute(headObjMethod);
+
+        final Collection<String> links = getLinkHeaders(response);
+        assertTrue("Didn't find LDP container link header!", links.contains("<" + BASIC_CONTAINER.getURI() + ">;" +
+                "rel=\"type\""));
+    }
+
+
+    @Test
+    public void testHeadDirectContainer() throws Exception {
+        final String pid = getRandomUniquePid();
+
+        createObject(pid);
+        addMixin(pid, DIRECT_CONTAINER.getURI());
+
+        final String location = serverAddress + pid;
+        final HttpHead headObjMethod = new HttpHead(location);
+        final HttpResponse response = client.execute(headObjMethod);
+
+        final Collection<String> links = getLinkHeaders(response);
+        assertTrue("Didn't find LDP container link header!", links.contains("<" + DIRECT_CONTAINER.getURI() + ">;" +
+                "rel=\"type\""));
+    }
+
+    @Test
+    public void testHeadIndirectContainer() throws Exception {
+        final String pid = getRandomUniquePid();
+
+        createObject(pid);
+        addMixin(pid, INDIRECT_CONTAINER.getURI());
+
+        final String location = serverAddress + pid;
+        final HttpHead headObjMethod = new HttpHead(location);
+        final HttpResponse response = client.execute(headObjMethod);
+
+        final Collection<String> links = getLinkHeaders(response);
+        assertTrue("Didn't find LDP container link header!", links.contains("<" + INDIRECT_CONTAINER.getURI() + ">;" +
+                "rel=\"type\""));
+    }
+
+
 
     @Test
     public void testHeadDatastream() throws Exception {
@@ -1126,7 +1180,6 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "object");
         verifyResource(model, nodeUri, rdfType, RESTAPI_NAMESPACE, "resource");
-        verifyResource(model, nodeUri, rdfType, LDP_NAMESPACE, "DirectContainer");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "created");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "lastModified");
         verifyResource(model, nodeUri, rdfType, MIX_NAMESPACE, "referenceable");
@@ -1182,14 +1235,13 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final Collection<String> links = getLinkHeaders(response);
         assertTrue("Didn't find LDP resource link header!",
                 links.contains("<" + LDP_NAMESPACE + "Resource>;rel=\"type\""));
-        assertTrue("Didn't find LDP container link header!",
-                links.contains("<" + LDP_NAMESPACE + "DirectContainer>;rel=\"type\""));
     }
 
     @Test
     public void testGetObjectGraphMinimal() throws Exception {
         final String pid = getRandomUniquePid();
         createObject(pid);
+        addMixin(pid, BASIC_CONTAINER.getURI());
         createObject(pid + "/a");
         final HttpGet getObjMethod =
                 new HttpGet(serverAddress + pid);
@@ -1222,6 +1274,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetObjectOmitMembership() throws Exception {
         final String pid = getRandomUniquePid();
         createObject(pid);
+        addMixin(pid, BASIC_CONTAINER.getURI());
         createObject(pid + "/a");
         final HttpGet getObjMethod =
                 new HttpGet(serverAddress + pid);
@@ -1251,6 +1304,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
     public void testGetObjectOmitContainment() throws Exception {
         final String pid = getRandomUniquePid();
         createObject(pid);
+        addMixin(pid, BASIC_CONTAINER.getURI());
         createObject(pid + "/a");
         final HttpGet getObjMethod =
                 new HttpGet(serverAddress + pid);
@@ -1954,6 +2008,7 @@ public class FedoraLdpIT extends AbstractResourceIT {
         final HttpResponse object = createObject(id);
         final String location = object.getFirstHeader("Location").getValue();
         createObject(id + "/t");
+        addMixin(id + "/t", DIRECT_CONTAINER.getURI());
 
         final HttpPatch patch = new HttpPatch(location + "/t");
         final String sparql = "INSERT DATA { "
@@ -1967,8 +2022,8 @@ public class FedoraLdpIT extends AbstractResourceIT {
 
         assertEquals("Expected patch to succeed", 204, getStatus(patch));
 
-
         createObject(id + "/b");
+        addMixin(id + "/b", DIRECT_CONTAINER.getURI());
 
         final HttpPatch bPatch = new HttpPatch(location + "/b");
         final String bSparql = "INSERT DATA { "

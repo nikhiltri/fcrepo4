@@ -15,15 +15,7 @@
  */
 package org.fcrepo.kernel.impl.rdf.impl;
 
-import static org.fcrepo.jcr.FedoraJcrTypes.LDP_HAS_MEMBER_RELATION;
-import static org.fcrepo.jcr.FedoraJcrTypes.LDP_MEMBER_RESOURCE;
-import static org.fcrepo.kernel.RdfLexicon.CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.DIRECT_CONTAINER;
-import static org.fcrepo.kernel.RdfLexicon.HAS_MEMBER_RELATION;
-import static org.fcrepo.kernel.RdfLexicon.LDP_MEMBER;
-import static org.fcrepo.kernel.RdfLexicon.MEMBERSHIP_RESOURCE;
 import static org.fcrepo.kernel.RdfLexicon.RDF_SOURCE;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
@@ -82,29 +74,6 @@ public class LdpRdfContextTest {
         final Model model = testObj.asModel();
 
         assertTrue(model.contains(subject(), RDF.type, RDF_SOURCE));
-        assertTrue(model.contains(subject(), RDF.type, CONTAINER));
-        assertTrue(model.contains(subject(), RDF.type, DIRECT_CONTAINER));
-    }
-
-    @Test
-    public void shouldIncludeDefaultContainerProperties() {
-        testObj = new LdpRdfContext(mockContainer, subjects);
-        final Model model = testObj.asModel();
-
-        assertTrue(model.contains(subject(), HAS_MEMBER_RELATION, LDP_MEMBER));
-        assertTrue(model.contains(subject(), MEMBERSHIP_RESOURCE, subject()));
-    }
-
-    @Test
-    public void shouldNotIncludeDefaultContainerPropertiesWhenSet() {
-        when(mockContainer.hasProperty(LDP_HAS_MEMBER_RELATION)).thenReturn(true);
-        when(mockContainer.hasProperty(LDP_MEMBER_RESOURCE)).thenReturn(true);
-
-        testObj = new LdpRdfContext(mockContainer, subjects);
-        final Model model = testObj.asModel();
-
-        assertFalse(model.contains(subject(), HAS_MEMBER_RELATION, LDP_MEMBER));
-        assertFalse(model.contains(subject(), MEMBERSHIP_RESOURCE, subject()));
     }
 
     private Resource subject() {
